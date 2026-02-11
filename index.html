@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Reading Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           DESIGN TOKENS
+           ============================================ */
+        :root {
+            --bg-deep: #0c0a07;
+            --bg-warm: #141110;
+            --bg-card: rgba(255, 255, 255, 0.07);
+            --bg-card-hover: rgba(255, 255, 255, 0.1);
+            --bg-input: rgba(255, 255, 255, 0.05);
+
+            --text-primary: #faf6f0;
+            --text-secondary: #d9d0c3;
+            --text-muted: #ada192;
+
+            --gold: #c9a55c;
+            --gold-light: #d4b87a;
+            --gold-dark: #a6853a;
+            --gold-glow: rgba(201, 165, 92, 0.15);
+            --gold-soft: rgba(201, 165, 92, 0.08);
+
+            --success: #6b8f71;
+            --success-soft: rgba(107, 143, 113, 0.12);
+            --warning: #c47f3e;
+            --warning-soft: rgba(196, 127, 62, 0.12);
+            --danger: #8b4049;
+            --danger-soft: rgba(139, 64, 73, 0.12);
+
+            --border: rgba(255, 255, 255, 0.12);
+            --border-light: rgba(255, 255, 255, 0.18);
+
+            --font-display: 'Playfair Display', 'Georgia', serif;
+            --font-body: 'Cormorant Garamond', 'Georgia', serif;
+
+            --radius-sm: 0.5rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+            --radius-pill: 2rem;
+
+            --blur: blur(20px) saturate(120%);
+
+            --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* ============================================
+           RESET & BASE
+           ============================================ */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        ::selection {
+            background: rgba(201, 165, 92, 0.3);
+            color: var(--text-primary);
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(201, 165, 92, 0.15);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(201, 165, 92, 0.3);
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 18px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ============================================
+           AMBIENT BACKGROUND
+           ============================================ */
+        .ambient {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* Unsplash library photo — slow Ken Burns drift */
+        .ambient-image {
+            position: absolute;
+            inset: -15%;
+            width: 130%;
+            height: 130%;
+            background-image: url("https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1920&q=80");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.06;
+            filter: saturate(0.3) brightness(0.6);
+            animation: kenBurns 60s ease-in-out infinite alternate;
+        }
+
+        @keyframes kenBurns {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+            100% {
+                transform: scale(1.08) translate(-2%, -1.5%);
+            }
+        }
+
+        /* Warm color overlay on top of image */
+        .ambient::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(80, 55, 30, 0.35) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 80% at 85% 70%, rgba(60, 35, 50, 0.3) 0%, transparent 70%),
+                radial-gradient(ellipse 90% 50% at 50% 110%, rgba(70, 50, 20, 0.25) 0%, transparent 60%);
+        }
+
+        /* Grain texture */
+        .ambient::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+        }
+
+        /* Floating particles */
+        .particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0;
+            animation: particleFloat linear infinite;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) translateX(0);
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20vh) translateX(40px);
+            }
+        }
+
+        /* ============================================
+           GLASS UTILITY
+           ============================================ */
+        .glass {
+            background: var(--bg-card);
+            -webkit-backdrop-filter: var(--blur);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                inset 0 0 0 0.5px rgba(255, 255, 255, 0.05);
+        }
+
+        @supports not (backdrop-filter: blur(1px)) {
+            .glass {
+                background: rgba(30, 25, 20, 0.92);
+            }
+        }
+
+        /* ============================================
+           LAYOUT
+           ============================================ */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem 6rem;
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        .container.transitioning {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1.5rem 1rem 1rem;
+            border-bottom: 1px solid var(--border);
+            border-radius: 0;
+        }
+
+        .header-inner {
+            max-width: 720px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .header-ornament {
+            font-size: 0.75rem;
+            color: var(--gold);
+            letter-spacing: 0.5em;
+            margin-bottom: 0.25rem;
+            opacity: 0.6;
+        }
+
+        header h1 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.02em;
+            margin-bottom: 0.15rem;
+        }
+
+        .header-subtitle {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ============================================
+           TABS
+           ============================================ */
+        .tabs {
+            display: flex;
+            gap: 0.35rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: var(--radius-pill);
+            padding: 0.25rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+
+        .tab {
+            flex: 1;
+            font-family: var(--font-display);
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 0.55rem 1rem;
+            border-radius: var(--radius-pill);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.35s var(--ease-out);
+        }
+
+        .tab:hover {
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .tab.active {
+            color: var(--gold);
+            background: var(--gold-soft);
+            border-color: rgba(201, 165, 92, 0.15);
+        }
+
+        /* ============================================
+           CARDS
+           ============================================ */
+        .card {
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeInUp 0.6s var(--ease-out) forwards;
+            transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease, background 0.3s ease;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            box-shadow:
+                0 12px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .book-card {
+            border-left: 3px solid var(--gold);
+            padding-left: 1.35rem;
+        }
+
+        .book-card.status-finished {
+            border-left-color: var(--success);
+        }
+
+        .book-card.status-dnf {
+            border-left-color: var(--warning);
+            opacity: 0.85;
+        }
+
+        .card h2 {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+        }
+
+        .card h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.15rem;
+            line-height: 1.3;
+        }
+
+        .author {
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-bottom: 0.85rem;
+        }
+
+        /* ============================================
+           PROGRESS BAR
+           ============================================ */
+        .progress-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
+            border-radius: 2px;
+            transition: width 0.6s var(--ease-out);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -2px;
+            width: 7px;
+            height: 7px;
+            background: var(--gold-light);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--gold-glow), 0 0 20px var(--gold-glow);
+        }
+
+        .progress-text {
+            font-size: 0.88rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-text span {
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        button {
+            font-family: var(--font-body);
+            cursor: pointer;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.5rem 1.1rem;
+            border: 1px solid transparent;
+            border-radius: var(--radius-pill);
+            font-family: var(--font-body);
+            font-size: 0.92rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all 0.25s var(--ease-out);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn:hover::before {
+            opacity: 1;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--gold-soft);
+            color: var(--gold-light);
+            border-color: rgba(201, 165, 92, 0.2);
+        }
+        .btn-primary:hover {
+            border-color: rgba(201, 165, 92, 0.35);
+            box-shadow: 0 0 20px rgba(201, 165, 92, 0.08);
+        }
+
+        .btn-success {
+            background: var(--success-soft);
+            color: var(--success);
+            border-color: rgba(107, 143, 113, 0.2);
+        }
+        .btn-success:hover {
+            border-color: rgba(107, 143, 113, 0.35);
+        }
+
+        .btn-warning {
+            background: var(--warning-soft);
+            color: var(--warning);
+            border-color: rgba(196, 127, 62, 0.2);
+        }
+        .btn-warning:hover {
+            border-color: rgba(196, 127, 62, 0.35);
+        }
+
+        .btn-danger {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-color: rgba(139, 64, 73, 0.15);
+        }
+        .btn-danger:hover {
+            border-color: rgba(139, 64, 73, 0.3);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-muted);
+            border-color: var(--border);
+        }
+        .btn-ghost:hover {
+            color: var(--text-secondary);
+            border-color: var(--border-light);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            color: #1a1510;
+            font-weight: 600;
+            border: none;
+            padding: 0.65rem 1.5rem;
+            box-shadow: 0 4px 16px rgba(201, 165, 92, 0.15);
+        }
+        .btn-submit:hover {
+            box-shadow: 0 6px 24px rgba(201, 165, 92, 0.25);
+            transform: translateY(-1px);
+        }
+        .btn-submit:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* ============================================
+           FORMS
+           ============================================ */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-family: var(--font-display);
+            font-size: 0.78rem;
+            font-weight: 400;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            padding: 0.7rem 0.9rem;
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: rgba(201, 165, 92, 0.3);
+            background: rgba(201, 165, 92, 0.02);
+            box-shadow: 0 0 0 3px rgba(201, 165, 92, 0.06);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239a8e7d' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            padding-right: 2rem;
+            cursor: pointer;
+        }
+
+        select option {
+            background: var(--bg-warm);
+            color: var(--text-primary);
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7) sepia(0.3) hue-rotate(10deg);
+            cursor: pointer;
+        }
+
+        /* ============================================
+           STARS & RATINGS
+           ============================================ */
+        .stars {
+            display: inline-flex;
+            gap: 0.2rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .star {
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s var(--ease-spring);
+            line-height: 1;
+        }
+
+        .star.filled {
+            color: var(--gold);
+            text-shadow: 0 0 12px rgba(201, 165, 92, 0.4);
+        }
+
+        .star:hover {
+            transform: scale(1.2);
+            color: var(--gold-light);
+            text-shadow: 0 0 16px rgba(201, 165, 92, 0.5);
+        }
+
+        .star-display {
+            color: var(--gold);
+            font-size: 0.95rem;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 8px rgba(201, 165, 92, 0.25);
+        }
+
+        /* ============================================
+           NOTES
+           ============================================ */
+        .notes-section {
+            margin-top: 0.85rem;
+            padding-top: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .notes-label {
+            font-family: var(--font-display);
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .note {
+            padding: 0.65rem 0.85rem;
+            background: rgba(255, 255, 255, 0.015);
+            border-left: 2px solid rgba(201, 165, 92, 0.15);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .note-meta {
+            font-size: 0.78rem;
+            font-style: normal;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            letter-spacing: 0.02em;
+        }
+
+        /* ============================================
+           META & REVIEW
+           ============================================ */
+        .meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+            letter-spacing: 0.015em;
+        }
+
+        .review {
+            font-family: var(--font-body);
+            font-size: 1.08rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            line-height: 1.5;
+            padding-left: 0.75rem;
+            border-left: 2px solid rgba(107, 143, 113, 0.2);
+        }
+
+        .dnf-reason {
+            font-size: 0.95rem;
+            color: var(--warning);
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        /* ============================================
+           FILTER BAR
+           ============================================ */
+        .filter-bar {
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .filter-bar label {
+            margin-bottom: 0;
+            font-size: 0.7rem;
+        }
+
+        .filter-bar select {
+            width: auto;
+            min-width: 120px;
+            padding: 0.45rem 2rem 0.45rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        /* ============================================
+           STATS GRID
+           ============================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.85rem;
+        }
+
+        .stat-card {
+            border-radius: var(--radius-md);
+            padding: 1.25rem 1rem;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInUp 0.6s var(--ease-out) forwards;
+            transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow:
+                0 12px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(201, 165, 92, 0.15);
+        }
+
+        .stat-label {
+            font-family: var(--font-display);
+            font-size: 0.6rem;
+            font-weight: 400;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+        }
+
+        /* ============================================
+           EMPTY STATE
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 3.5rem 2rem;
+            opacity: 0;
+            animation: fadeInUp 0.6s var(--ease-out) 0.1s forwards;
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.15;
+        }
+
+        .empty-quote {
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            line-height: 1.6;
+            max-width: 400px;
+            margin: 0 auto 0.5rem;
+        }
+
+        .empty-attribution {
+            font-family: var(--font-display);
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        /* ============================================
+           MODAL
+           ============================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(8, 6, 4, 0.65);
+            -webkit-backdrop-filter: blur(8px) saturate(100%);
+            backdrop-filter: blur(8px) saturate(100%);
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .modal {
+            position: relative;
+            z-index: 1;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            width: 100%;
+            max-width: 420px;
+            max-height: 90vh;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateY(12px) scale(0.98);
+            animation: modalIn 0.4s var(--ease-out) 0.1s forwards;
+        }
+
+        .modal h2 {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .modal-divider {
+            text-align: center;
+            color: var(--gold);
+            opacity: 0.3;
+            font-size: 0.65rem;
+            letter-spacing: 0.6em;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ============================================
+           LITERARY QUOTE FOOTER
+           ============================================ */
+        .quote-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            text-align: center;
+            padding: 1rem 2rem;
+            background: linear-gradient(to top, var(--bg-deep) 40%, transparent);
+            pointer-events: none;
+        }
+
+        .literary-quote {
+            font-family: var(--font-body);
+            font-size: 0.82rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            opacity: 0.5;
+            transition: opacity 0.8s ease;
+            letter-spacing: 0.01em;
+        }
+
+        /* ============================================
+           SECTION ORNAMENT
+           ============================================ */
+        .section-ornament {
+            text-align: center;
+            margin: 1.75rem 0 1.5rem;
+            color: var(--gold);
+            opacity: 0.2;
+            font-size: 0.6rem;
+            letter-spacing: 0.8em;
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(201, 165, 92, 0); }
+            50% { box-shadow: 0 0 20px 4px rgba(201, 165, 92, 0.08); }
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 520px) {
+            header {
+                padding: 1.25rem 0.75rem 0.75rem;
+            }
+
+            header h1 {
+                font-size: 1.4rem;
+            }
+
+            .tabs {
+                gap: 0.2rem;
+            }
+
+            .tab {
+                font-size: 0.6rem;
+                padding: 0.5rem 0.65rem;
+                letter-spacing: 0.06em;
+            }
+
+            .container {
+                padding: 1rem 0.75rem 6rem;
+            }
+
+            .card {
+                padding: 1.15rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.65rem;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+
+            .modal {
+                padding: 1.5rem;
+                max-width: 100%;
+                margin: 0 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Ambient background -->
+    <div class="ambient" aria-hidden="true">
+        <div class="ambient-image"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="glass">
+        <div class="header-inner">
+            <div class="header-ornament">&#10041;</div>
+            <h1>The Reading Room</h1>
+            <p class="header-subtitle">A personal literary sanctuary</p>
+            <nav class="tabs">
+                <button class="tab active" data-tab="reading">Currently Reading</button>
+                <button class="tab" data-tab="finished">Finished</button>
+                <button class="tab" data-tab="dnf">DNF</button>
+                <button class="tab" data-tab="stats">Stats</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="container" id="content"></main>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-backdrop" id="modal-backdrop"></div>
+        <div class="modal glass" id="modal-content"></div>
+    </div>
+
+    <!-- Literary quote footer -->
+    <footer class="quote-footer">
+        <p class="literary-quote" id="literary-quote"></p>
+    </footer>
+
+    <script>
+        // ============================================
+        // STATE
+        // ============================================
+        let books = [];
+        let currentTab = 'reading';
+        let finishedFilter = 'year';
+
+        const STORAGE_KEY = 'reading-tracker-books';
+
+        // ============================================
+        // LOCAL STORAGE
+        // ============================================
+        function saveBooks() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+        }
+
+        function loadBooks() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                books = JSON.parse(stored);
+            } else {
+                books = getSampleBooks();
+                saveBooks();
+            }
+        }
+
+        function getSampleBooks() {
+            const now = new Date();
+            const daysAgo = (d) => new Date(now - d * 86400000).toISOString().split('T')[0];
+            return [
+                {
+                    id: crypto.randomUUID(),
+                    title: 'The Secret History',
+                    author: 'Donna Tartt',
+                    pageCount: 559,
+                    currentPage: 312,
+                    dateStarted: daysAgo(18),
+                    dateFinished: null,
+                    status: 'reading',
+                    rating: null,
+                    review: null,
+                    dnfReason: null,
+                    notes: [
+                        { text: 'The Greek class dynamics are mesmerizing. Henry is terrifying and magnetic.', date: new Date(now - 12 * 86400000).toISOString(), page: 148 },
+                        { text: 'The bacchanal scene is one of the most haunting things I have ever read.', date: new Date(now - 5 * 86400000).toISOString(), page: 278 }
+                    ],
+                    lastUpdated: new Date(now - 1 * 86400000).toISOString()
+                },
+                {
+                    id: crypto.randomUUID(),
+                    title: 'Circe',
+                    author: 'Madeline Miller',
+                    pageCount: 393,
+                    currentPage: 87,
+                    dateStarted: daysAgo(5),
+                    dateFinished: null,
+                    status: 'reading',
+                    rating: null,
+                    review: null,
+                    dnfReason: null,
+                    notes: [
+                        { text: 'Her prose reads like poetry. The loneliness of divinity is palpable.', date: new Date(now - 2 * 86400000).toISOString(), page: 64 }
+                    ],
+                    lastUpdated: new Date(now - 2 * 86400000).toISOString()
+                },
+                {
+                    id: crypto.randomUUID(),
+                    title: 'If We Were Villains',
+                    author: 'M.L. Rio',
+                    pageCount: 368,
+                    currentPage: 368,
+                    dateStarted: daysAgo(45),
+                    dateFinished: daysAgo(22),
+                    status: 'finished',
+                    rating: 5,
+                    review: 'Shakespeare and murder entwined in ivy-covered halls. Devastating and perfect.',
+                    dnfReason: null,
+                    notes: [],
+                    lastUpdated: new Date(now - 22 * 86400000).toISOString()
+                },
+                {
+                    id: crypto.randomUUID(),
+                    title: 'The Name of the Rose',
+                    author: 'Umberto Eco',
+                    pageCount: 536,
+                    currentPage: 536,
+                    dateStarted: daysAgo(90),
+                    dateFinished: daysAgo(52),
+                    status: 'finished',
+                    rating: 4,
+                    review: 'A labyrinth of medieval mystery. Dense but endlessly rewarding.',
+                    dnfReason: null,
+                    notes: [],
+                    lastUpdated: new Date(now - 52 * 86400000).toISOString()
+                },
+                {
+                    id: crypto.randomUUID(),
+                    title: 'Normal People',
+                    author: 'Sally Rooney',
+                    pageCount: 273,
+                    currentPage: 273,
+                    dateStarted: daysAgo(120),
+                    dateFinished: daysAgo(105),
+                    status: 'finished',
+                    rating: 3,
+                    review: 'Quietly devastating. The silences between Connell and Marianne say everything.',
+                    dnfReason: null,
+                    notes: [],
+                    lastUpdated: new Date(now - 105 * 86400000).toISOString()
+                },
+                {
+                    id: crypto.randomUUID(),
+                    title: 'The Goldfinch',
+                    author: 'Donna Tartt',
+                    pageCount: 771,
+                    currentPage: 204,
+                    dateStarted: daysAgo(60),
+                    dateFinished: null,
+                    status: 'dnf',
+                    rating: null,
+                    review: null,
+                    dnfReason: 'Beautiful prose but the pacing lost me after Las Vegas. Will revisit someday.',
+                    notes: [],
+                    lastUpdated: new Date(now - 35 * 86400000).toISOString()
+                }
+            ];
+        }
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+        function formatDate(isoString) {
+            if (!isoString) return '';
+            return new Date(isoString).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric'
+            });
+        }
+
+        function daysBetween(start, end) {
+            return Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
+        }
+
+        function isThisYear(dateStr) {
+            if (!dateStr) return false;
+            return new Date(dateStr).getFullYear() === new Date().getFullYear();
+        }
+
+        function isThisMonth(dateStr) {
+            if (!dateStr) return false;
+            const d = new Date(dateStr);
+            const now = new Date();
+            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // BOOK OPERATIONS
+        // ============================================
+        function addBook(title, author, pageCount, dateStarted) {
+            books.push({
+                id: crypto.randomUUID(),
+                title,
+                author,
+                pageCount: parseInt(pageCount),
+                currentPage: 0,
+                dateStarted,
+                dateFinished: null,
+                status: 'reading',
+                rating: null,
+                review: null,
+                dnfReason: null,
+                notes: [],
+                lastUpdated: new Date().toISOString()
+            });
+            saveBooks();
+            renderCurrentView();
+        }
+
+        function updateProgress(id, currentPage, noteText) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+            book.currentPage = parseInt(currentPage);
+            book.lastUpdated = new Date().toISOString();
+            if (noteText && noteText.trim()) {
+                book.notes.push({
+                    text: noteText.trim(),
+                    date: new Date().toISOString(),
+                    page: book.currentPage
+                });
+            }
+            saveBooks();
+            renderCurrentView();
+        }
+
+        function markComplete(id, rating, review) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+            book.status = 'finished';
+            book.currentPage = book.pageCount;
+            book.dateFinished = new Date().toISOString().split('T')[0];
+            book.rating = rating ? parseInt(rating) : null;
+            book.review = review && review.trim() ? review.trim() : null;
+            book.lastUpdated = new Date().toISOString();
+            saveBooks();
+            renderCurrentView();
+        }
+
+        function markDNF(id, reason) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+            book.status = 'dnf';
+            book.dnfReason = reason && reason.trim() ? reason.trim() : 'No reason given';
+            book.lastUpdated = new Date().toISOString();
+            saveBooks();
+            renderCurrentView();
+        }
+
+        function deleteBook(id) {
+            if (confirm('Remove this book from your collection?')) {
+                books = books.filter(b => b.id !== id);
+                saveBooks();
+                renderCurrentView();
+            }
+        }
+
+        // ============================================
+        // STATS
+        // ============================================
+        function getStats() {
+            const finished = books.filter(b => b.status === 'finished');
+            const dnf = books.filter(b => b.status === 'dnf');
+            const finishedThisMonth = finished.filter(b => isThisMonth(b.dateFinished));
+            const finishedThisYear = finished.filter(b => isThisYear(b.dateFinished));
+            const pagesThisMonth = finishedThisMonth.reduce((sum, b) => sum + b.pageCount, 0);
+            const pagesThisYear = finishedThisYear.reduce((sum, b) => sum + b.pageCount, 0);
+
+            const daysToFinish = finished
+                .filter(b => b.dateStarted && b.dateFinished)
+                .map(b => daysBetween(b.dateStarted, b.dateFinished));
+            const avgDays = daysToFinish.length
+                ? Math.round(daysToFinish.reduce((a, b) => a + b, 0) / daysToFinish.length)
+                : 0;
+
+            const totalCompleted = finished.length + dnf.length;
+            const finishRate = totalCompleted > 0
+                ? Math.round((finished.length / totalCompleted) * 100)
+                : 0;
+
+            return {
+                booksThisMonth: finishedThisMonth.length,
+                booksThisYear: finishedThisYear.length,
+                pagesThisMonth,
+                pagesThisYear,
+                avgDays,
+                finishRate,
+                totalFinished: finished.length,
+                totalDNF: dnf.length
+            };
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+        function renderStars(rating, interactive = false) {
+            if (interactive) {
+                return `<div class="stars" data-rating="${rating || 0}">
+                    ${[1,2,3,4,5].map(i =>
+                        `<span class="star ${i <= (rating || 0) ? 'filled' : ''}" data-value="${i}">&#9733;</span>`
+                    ).join('')}
+                </div>`;
+            }
+            if (!rating) return '';
+            return `<span class="star-display">${'&#9733;'.repeat(rating)}${'&#9734;'.repeat(5 - rating)}</span>`;
+        }
+
+        function renderBookCard(book, index = 0) {
+            const progress = book.pageCount > 0
+                ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
+            const delay = index * 0.07;
+
+            let statusClass = '';
+            let statusInfo = '';
+            let actionsHtml = '';
+
+            if (book.status === 'reading') {
+                statusInfo = `
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div>
+                    <div class="progress-text">Page <span>${book.currentPage}</span> of ${book.pageCount} &mdash; <span>${progress}%</span></div>
+                `;
+                actionsHtml = `
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="showUpdateModal('${book.id}')">Update Progress</button>
+                        <button class="btn btn-success" onclick="showCompleteModal('${book.id}')">Mark Complete</button>
+                        <button class="btn btn-warning" onclick="showDNFModal('${book.id}')">Mark DNF</button>
+                        <button class="btn btn-danger" onclick="deleteBook('${book.id}')">Remove</button>
+                    </div>
+                `;
+            } else if (book.status === 'finished') {
+                statusClass = 'status-finished';
+                const days = book.dateStarted && book.dateFinished
+                    ? daysBetween(book.dateStarted, book.dateFinished) : null;
+                statusInfo = `
+                    <div>${renderStars(book.rating)}</div>
+                    ${book.review ? `<div class="review">\u201C${escapeHtml(book.review)}\u201D</div>` : ''}
+                    <div class="meta">
+                        ${formatDate(book.dateStarted)} \u2014 ${formatDate(book.dateFinished)}
+                        ${days !== null ? ` &middot; ${days} days` : ''}
+                        &middot; ${book.pageCount} pages
+                    </div>
+                `;
+                actionsHtml = `
+                    <div class="actions">
+                        <button class="btn btn-danger" onclick="deleteBook('${book.id}')">Remove</button>
+                    </div>
+                `;
+            } else if (book.status === 'dnf') {
+                statusClass = 'status-dnf';
+                statusInfo = `
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%; background: linear-gradient(90deg, rgba(196,127,62,0.5), var(--warning));"></div></div>
+                    <div class="progress-text">Abandoned at page <span>${book.currentPage}</span> of ${book.pageCount} &mdash; <span>${progress}%</span></div>
+                    <div class="dnf-reason">\u201C${escapeHtml(book.dnfReason || 'No reason given')}\u201D</div>
+                `;
+                actionsHtml = `
+                    <div class="actions">
+                        <button class="btn btn-danger" onclick="deleteBook('${book.id}')">Remove</button>
+                    </div>
+                `;
+            }
+
+            let notesHtml = '';
+            if (book.notes && book.notes.length > 0 && book.status === 'reading') {
+                notesHtml = `
+                    <div class="notes-section">
+                        <div class="notes-label">Recent Notes</div>
+                        ${book.notes.slice(-3).reverse().map(n => `
+                            <div class="note">
+                                ${escapeHtml(n.text)}
+                                <div class="note-meta">Page ${n.page} &middot; ${formatDate(n.date)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="card glass book-card ${statusClass}" style="animation-delay: ${delay}s">
+                    <h3>${escapeHtml(book.title)}</h3>
+                    <div class="author">by ${escapeHtml(book.author)}</div>
+                    ${statusInfo}
+                    ${notesHtml}
+                    ${actionsHtml}
+                </div>
+            `;
+        }
+
+        function renderReadingTab() {
+            const reading = books
+                .filter(b => b.status === 'reading')
+                .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
+
+            return `
+                <div class="card glass" style="animation-delay: 0s">
+                    <h2>Begin a New Chapter</h2>
+                    <form id="add-book-form">
+                        <div class="form-group">
+                            <label for="title">Title</label>
+                            <input type="text" id="title" placeholder="The name of your next journey..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="author">Author</label>
+                            <input type="text" id="author" placeholder="The voice behind the words..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pages">Total Pages</label>
+                            <input type="number" id="pages" min="1" placeholder="How many pages await?" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="started">Date Started</label>
+                            <input type="date" id="started" value="${new Date().toISOString().split('T')[0]}" required>
+                        </div>
+                        <button type="submit" class="btn btn-submit">Add to Collection</button>
+                    </form>
+                </div>
+                ${reading.length > 0
+                    ? '<div class="section-ornament">\u2014\u2014 &#10043; \u2014\u2014</div>'
+                    : ''}
+                ${reading.length === 0
+                    ? `<div class="empty-state">
+                        <div class="empty-icon">&#128214;</div>
+                        <p class="empty-quote">Every empty shelf is a story yet to begin...</p>
+                        <p class="empty-attribution">Add your first book above</p>
+                       </div>`
+                    : reading.map((b, i) => renderBookCard(b, i + 1)).join('')
+                }
+            `;
+        }
+
+        function renderFinishedTab() {
+            let finished = books
+                .filter(b => b.status === 'finished')
+                .sort((a, b) => new Date(b.dateFinished) - new Date(a.dateFinished));
+
+            if (finishedFilter === 'year') {
+                finished = finished.filter(b => isThisYear(b.dateFinished));
+            }
+
+            return `
+                <div class="filter-bar">
+                    <label>Show</label>
+                    <select id="finished-filter">
+                        <option value="year" ${finishedFilter === 'year' ? 'selected' : ''}>This Year</option>
+                        <option value="all" ${finishedFilter === 'all' ? 'selected' : ''}>All Time</option>
+                    </select>
+                </div>
+                ${finished.length === 0
+                    ? `<div class="empty-state">
+                        <div class="empty-icon">&#128218;</div>
+                        <p class="empty-quote">Your completed journeys will gather here, like treasured volumes on a shelf.</p>
+                        <p class="empty-attribution">Finish a book to see it here</p>
+                       </div>`
+                    : finished.map((b, i) => renderBookCard(b, i)).join('')
+                }
+            `;
+        }
+
+        function renderDNFTab() {
+            const dnf = books
+                .filter(b => b.status === 'dnf')
+                .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
+
+            return dnf.length === 0
+                ? `<div class="empty-state">
+                    <div class="empty-icon">&#127811;</div>
+                    <p class="empty-quote">Not every path through the forest leads to the clearing \u2014 and that is perfectly alright.</p>
+                    <p class="empty-attribution">No unfinished books</p>
+                   </div>`
+                : dnf.map((b, i) => renderBookCard(b, i)).join('');
+        }
+
+        function renderStatsTab() {
+            const stats = getStats();
+            const statItems = [
+                { value: stats.booksThisMonth, label: 'Books This Month' },
+                { value: stats.booksThisYear, label: 'Books This Year' },
+                { value: stats.pagesThisMonth.toLocaleString(), label: 'Pages This Month' },
+                { value: stats.pagesThisYear.toLocaleString(), label: 'Pages This Year' },
+                { value: stats.avgDays, label: 'Avg Days to Finish' },
+                { value: `${stats.finishRate}%`, label: 'Finish Rate' },
+                { value: stats.totalFinished, label: 'Total Finished' },
+                { value: stats.totalDNF, label: 'Total DNF' }
+            ];
+
+            return `
+                <div class="stats-grid">
+                    ${statItems.map((s, i) => `
+                        <div class="stat-card glass" style="animation-delay: ${i * 0.06}s">
+                            <div class="stat-value">${s.value}</div>
+                            <div class="stat-label">${s.label}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderCurrentView(animate = true) {
+            const content = document.getElementById('content');
+
+            if (animate) {
+                content.classList.add('transitioning');
+                setTimeout(() => {
+                    renderContent(content);
+                    content.classList.remove('transitioning');
+                }, 250);
+            } else {
+                renderContent(content);
+            }
+        }
+
+        function renderContent(content) {
+            switch (currentTab) {
+                case 'reading':
+                    content.innerHTML = renderReadingTab();
+                    setupAddBookForm();
+                    break;
+                case 'finished':
+                    content.innerHTML = renderFinishedTab();
+                    setupFinishedFilter();
+                    break;
+                case 'dnf':
+                    content.innerHTML = renderDNFTab();
+                    break;
+                case 'stats':
+                    content.innerHTML = renderStatsTab();
+                    break;
+            }
+        }
+
+        // ============================================
+        // MODALS
+        // ============================================
+        function showModal(html) {
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function showUpdateModal(id) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+
+            showModal(`
+                <h2>Update Progress</h2>
+                <div class="modal-divider">\u2014 &#10043; \u2014</div>
+                <form id="update-form">
+                    <div class="form-group">
+                        <label for="current-page">Current Page (of ${book.pageCount})</label>
+                        <input type="number" id="current-page" min="0" max="${book.pageCount}" value="${book.currentPage}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="note">Add a Note</label>
+                        <textarea id="note" placeholder="A thought, a passage, a feeling..."></textarea>
+                    </div>
+                    <div class="actions" style="justify-content: flex-end;">
+                        <button type="button" class="btn btn-ghost" onclick="hideModal()">Cancel</button>
+                        <button type="submit" class="btn btn-submit">Save</button>
+                    </div>
+                </form>
+            `);
+
+            document.getElementById('update-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                updateProgress(id,
+                    document.getElementById('current-page').value,
+                    document.getElementById('note').value
+                );
+                hideModal();
+            });
+        }
+
+        function showCompleteModal(id) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+
+            showModal(`
+                <h2>Mark as Complete</h2>
+                <div class="modal-divider">\u2014 &#10043; \u2014</div>
+                <form id="complete-form">
+                    <div class="form-group">
+                        <label>Your Rating</label>
+                        ${renderStars(0, true)}
+                    </div>
+                    <div class="form-group">
+                        <label for="review">A Brief Reflection</label>
+                        <textarea id="review" placeholder="What will you carry from this book?"></textarea>
+                    </div>
+                    <div class="actions" style="justify-content: flex-end;">
+                        <button type="button" class="btn btn-ghost" onclick="hideModal()">Cancel</button>
+                        <button type="submit" class="btn btn-submit">Complete</button>
+                    </div>
+                </form>
+            `);
+
+            let selectedRating = 0;
+            document.querySelectorAll('.stars .star').forEach(star => {
+                star.addEventListener('click', () => {
+                    selectedRating = parseInt(star.dataset.value);
+                    document.querySelectorAll('.stars .star').forEach((s, i) => {
+                        s.classList.toggle('filled', i < selectedRating);
+                    });
+                });
+            });
+
+            document.getElementById('complete-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                markComplete(id, selectedRating, document.getElementById('review').value);
+                hideModal();
+            });
+        }
+
+        function showDNFModal(id) {
+            showModal(`
+                <h2>Did Not Finish</h2>
+                <div class="modal-divider">\u2014 &#10043; \u2014</div>
+                <form id="dnf-form">
+                    <div class="form-group">
+                        <label for="reason">Why did you set it down?</label>
+                        <textarea id="reason" placeholder="Sometimes a book simply isn't meant for this season..."></textarea>
+                    </div>
+                    <div class="actions" style="justify-content: flex-end;">
+                        <button type="button" class="btn btn-ghost" onclick="hideModal()">Cancel</button>
+                        <button type="submit" class="btn btn-warning" style="border: none; padding: 0.65rem 1.5rem;">Mark DNF</button>
+                    </div>
+                </form>
+            `);
+
+            document.getElementById('dnf-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                markDNF(id, document.getElementById('reason').value);
+                hideModal();
+            });
+        }
+
+        // ============================================
+        // EVENT SETUP
+        // ============================================
+        function setupAddBookForm() {
+            const form = document.getElementById('add-book-form');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    addBook(
+                        document.getElementById('title').value,
+                        document.getElementById('author').value,
+                        document.getElementById('pages').value,
+                        document.getElementById('started').value
+                    );
+                });
+            }
+        }
+
+        function setupFinishedFilter() {
+            const filter = document.getElementById('finished-filter');
+            if (filter) {
+                filter.addEventListener('change', (e) => {
+                    finishedFilter = e.target.value;
+                    renderCurrentView();
+                });
+            }
+        }
+
+        function setupTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentTab = tab.dataset.tab;
+                    renderCurrentView(true);
+                });
+            });
+        }
+
+        function setupModalClose() {
+            document.getElementById('modal-backdrop').addEventListener('click', hideModal);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') hideModal();
+            });
+        }
+
+        // ============================================
+        // LITERARY QUOTES
+        // ============================================
+        const literaryQuotes = [
+            { text: 'A reader lives a thousand lives before he dies.', author: 'George R.R. Martin' },
+            { text: 'I have always imagined that Paradise will be a kind of library.', author: 'Jorge Luis Borges' },
+            { text: 'A book is a dream that you hold in your hand.', author: 'Neil Gaiman' },
+            { text: 'She read books as one would breathe air, to fill up and live.', author: 'Annie Dillard' },
+            { text: 'Books are a uniquely portable magic.', author: 'Stephen King' },
+            { text: 'The world was hers for the reading.', author: 'Betty Smith' },
+            { text: 'Think before you speak. Read before you think.', author: 'Fran Lebowitz' },
+            { text: 'We read to know we are not alone.', author: 'C.S. Lewis' },
+            { text: 'A room without books is like a body without a soul.', author: 'Cicero' },
+            { text: 'Until I feared I would lose it, I never loved to read.', author: 'Harper Lee' }
+        ];
+
+        function showRandomQuote() {
+            const el = document.getElementById('literary-quote');
+            const quote = literaryQuotes[Math.floor(Math.random() * literaryQuotes.length)];
+            el.style.opacity = '0';
+            setTimeout(() => {
+                el.textContent = `\u201C${quote.text}\u201D \u2014 ${quote.author}`;
+                el.style.opacity = '0.5';
+            }, 400);
+        }
+
+        // ============================================
+        // PARTICLES
+        // ============================================
+        function createParticles() {
+            const container = document.querySelector('.ambient');
+            const count = 18;
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 2.5 + 1;
+                const isGold = Math.random() > 0.5;
+                particle.style.cssText = `
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${Math.random() * 100}%;
+                    background: ${isGold
+                        ? `rgba(201, 165, 92, ${Math.random() * 0.25 + 0.08})`
+                        : `rgba(232, 220, 200, ${Math.random() * 0.12 + 0.04})`};
+                    animation-duration: ${Math.random() * 25 + 20}s;
+                    animation-delay: ${Math.random() * -30}s;
+                `;
+                container.appendChild(particle);
+            }
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        function init() {
+            loadBooks();
+            setupTabs();
+            setupModalClose();
+            renderCurrentView(false);
+            createParticles();
+            showRandomQuote();
+            setInterval(showRandomQuote, 15000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
